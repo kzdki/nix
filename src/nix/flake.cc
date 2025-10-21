@@ -362,7 +362,7 @@ struct CmdFlakeCheck : FlakeCommand
                 throw;
             } catch (Error & e) {
                 if (settings.keepGoing) {
-                    ignoreExceptionExceptInterrupt();
+                    logError(e.info());
                     hasErrors = true;
                 } else
                     throw;
