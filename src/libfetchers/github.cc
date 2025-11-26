@@ -41,7 +41,7 @@ struct GitArchiveInputScheme : InputScheme
         /* This ignores empty path segments for back-compat. Older versions used a tokenizeString here. */
         auto path = url.pathSegments(/*skipEmpty=*/true) | std::ranges::to<std::vector<std::string>>();
 
-        std::optional<Hash> rev;
+        std::optional<std::string> rev;
         std::optional<std::string> ref;
         std::optional<std::string> host_url;
 
@@ -49,10 +49,8 @@ struct GitArchiveInputScheme : InputScheme
         if (size == 3) {
             if (std::regex_match(path[2], revRegex))
                 rev = parseGitHash(path[2]);
-            else if (isLegalRefName(path[2]))
-                ref = path[2];
             else
-                throw BadURL("in URL '%s', '%s' is not a commit hash or branch/tag name", url, path[2]);
+                ref = path[2];
         } else if (size > 3) {
             std::string rs;
             for (auto i = std::next(path.begin(), 2); i != path.end(); i++) {
@@ -61,12 +59,7 @@ struct GitArchiveInputScheme : InputScheme
                     rs += "/";
                 }
             }
-
-            if (isLegalRefName(rs)) {
-                ref = rs;
-            } else {
-                throw BadURL("in URL '%s', '%s' is not a branch/tag name", url, rs);
-            }
+            ref = rs;
         } else if (size < 2)
             throw BadURL("URL '%s' is invalid", url);
 
@@ -76,38 +69,30 @@ struct GitArchiveInputScheme : InputScheme
                     throw BadURL("URL '%s' contains multiple commit hashes", url);
                 rev = parseGitHash(value);
             } else if (name == "ref") {
-                if (!isLegalRefName(value))
-                    throw BadURL("URL '%s' contains an invalid branch/tag name", url);
                 if (ref)
                     throw BadURL("URL '%s' contains multiple branch/tag names", url);
                 ref = value;
-            } else if (name == "host") {
-                if (!std::regex_match(value, hostRegex))
-                    throw BadURL("URL '%s' contains an invalid instance host", url);
+            } else if (name == "host")
                 host_url = value;
-            }
             // FIXME: barf on unsupported attributes
         }
 
-        if (ref && rev)
-            throw BadURL("URL '%s' contains both a commit hash and a branch/tag name %s %s", url, *ref, rev->gitRev());
-
-        Input input{};
-        input.attrs.insert_or_assign("type", std::string{schemeName()});
-        input.attrs.insert_or_assign("owner", path[0]);
-        input.attrs.insert_or_assign("repo", path[1]);
+        Attrs attrs;
+        attrs.insert_or_assign("type", std::string{schemeName()});
+        attrs.insert_or_assign("owner", path[0]);
+        attrs.insert_or_assign("repo", path[1]);
         if (rev)
-            input.attrs.insert_or_assign("rev", rev->gitRev());
+            attrs.insert_or_assign("rev", *rev);
         if (ref)
-            input.attrs.insert_or_assign("ref", *ref);
+            attrs.insert_or_assign("ref", *ref);
         if (host_url)
-            input.attrs.insert_or_assign("host", *host_url);
+            attrs.insert_or_assign("host", *host_url);
 
         auto narHash = url.query.find("narHash");
         if (narHash != url.query.end())
-            input.attrs.insert_or_assign("narHash", narHash->second);
+            attrs.insert_or_assign("narHash", narHash->second);
 
-        return input;
+        return inputFromAttrs(settings, attrs);
     }
 
     const std::map<std::string, AttributeInfo> & allowedAttrs() const override
@@ -153,6 +138,24 @@ struct GitArchiveInputScheme : InputScheme
     {
         getStrAttr(attrs, "owner");
         getStrAttr(attrs, "repo");
+
+        auto ref = maybeGetStrAttr(attrs, "ref");
+        auto rev = maybeGetStrAttr(attrs, "rev");
+        if (ref && rev)
+            throw BadURL(
+                "input %s contains both a commit hash ('%s') and a branch/tag name ('%s')",
+                attrsToJSON(attrs),
+                *rev,
+                *ref);
+
+        if (rev)
+            Hash::parseAny(*rev, HashAlgorithm::SHA1);
+
+        if (ref && !isLegalRefName(*ref))
+            throw BadURL("input %s contains an invalid branch/tag name", attrsToJSON(attrs));
+
+        if (auto host = maybeGetStrAttr(attrs, "host"); host && !std::regex_match(*host, hostRegex))
+            throw BadURL("input %s contains an invalid instance host", attrsToJSON(attrs));
 
         Input input{};
         input.attrs = attrs;
