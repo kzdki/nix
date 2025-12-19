@@ -1118,6 +1118,13 @@ struct GitFileSystemObjectSinkImpl : GitFileSystemObjectSink
     {
     }
 
+    ~GitFileSystemObjectSinkImpl()
+    {
+        // Make sure the worker threads are destroyed before any state
+        // they're referring to.
+        workers.shutdown();
+    }
+
     struct Child;
 
     /// A directory to be written as a Git tree.
