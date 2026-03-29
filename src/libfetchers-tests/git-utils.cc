@@ -15,7 +15,7 @@
 #include <git2-experimental/blob.h>
 #include <git2-experimental/tree.h>
 
-namespace nix {
+namespace nix::fetchers {
 
 class GitUtilsTest : public ::testing::Test
 {
@@ -234,4 +234,4 @@ TEST(GitUtils, isLegalRefName)
     ASSERT_FALSE(isLegalRefName(""));
 }
 
-} // namespace nix
+} // namespace nix::fetchers
