@@ -1,6 +1,4 @@
 #include "nix/fetchers/attrs.hh"
-#include "nix/fetchers/fetchers.hh"
-#include "nix/fetchers/git-utils.hh"
 
 #include <nlohmann/json.hpp>
 
