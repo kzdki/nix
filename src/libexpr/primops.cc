@@ -3498,7 +3498,7 @@ static RegisterPrimOp primop_catAttrs({
 
       O(n * log m) where:
 
-      n = number of sets in input list
+      n = list length
       m = number of attributes per set
     )",
     .impl = prim_catAttrs,
@@ -3586,7 +3586,7 @@ static RegisterPrimOp primop_mapAttrs({
 
       n = number of attributes
 
-      Calls to `f` are performed afterwards, when needed
+      Calls to `f` are performed afterwards, when needed.
     )",
     .impl = prim_mapAttrs,
 });
@@ -3677,12 +3677,10 @@ static RegisterPrimOp primop_zipAttrsWith({
 
       # Time Complexity
 
-      O(n * k * log k) worst case, where:
+      O(N * log k) where:
 
-      n = number of attribute sets in input list
+      N = total attributes across all sets
       k = number of unique keys across all sets
-
-      More precisely: O(n * m * log k) where m ≤ k is average number of attributes per set
     )",
     .impl = prim_zipAttrsWith,
 });
@@ -3882,7 +3880,7 @@ static RegisterPrimOp primop_filter({
 
       # Time Complexity
 
-      O(n * T_f) where:
+      O(n * T_f) (eager; predicate is forced) where:
 
       n = list length
       T_f = predicate evaluation time
@@ -5136,7 +5134,7 @@ static RegisterPrimOp primop_concatStringsSep({
 
       # Time Complexity
 
-      O(n + m) where:
+      O(n + m) (amortized) where:
 
       n = number of list elements
       m = total length of output string
@@ -5227,7 +5225,7 @@ static RegisterPrimOp primop_replaceStrings({
 
       # Time Complexity
 
-      O(n * k * c) where:
+      O(n * k * c) (worst case) where:
 
       n = length of input string
       k = number of replacement patterns
