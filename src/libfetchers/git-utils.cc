@@ -13,6 +13,7 @@
 #include "nix/util/util.hh"
 #include "nix/util/thread-pool.hh"
 #include "nix/util/pool.hh"
+#include "nix/util/deleter.hh"
 
 #include <git2-experimental/attr.h>
 #include <git2-experimental/blob.h>
