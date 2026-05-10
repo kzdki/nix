@@ -1503,6 +1503,7 @@ std::vector<std::tuple<GitRepoImpl::Submodule, Hash>> GitRepoImpl::getSubmodules
     auto configS = accessor->readFile(modulesFile);
 
     auto [fdTemp, pathTemp] = createTempFile("nix-git-submodules");
+    AutoDelete delTemp(pathTemp, /*recursive=*/false);
     try {
         writeFull(fdTemp.get(), configS);
     } catch (SystemError & e) {
@@ -1521,6 +1522,7 @@ std::vector<std::tuple<GitRepoImpl::Submodule, Hash>> GitRepoImpl::getSubmodules
             result.push_back({std::move(submodule), *rev});
     }
 
+    delTemp.deletePath();
     return result;
 }
 
