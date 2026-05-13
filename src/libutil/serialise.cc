@@ -508,12 +508,11 @@ Sink & operator<<(Sink & sink, const Error & ex)
 void readPadding(size_t len, Source & source)
 {
     if (len % 8) {
-        char zero[8];
+        uint64_t zero = 0;
         size_t n = 8 - (len % 8);
-        source(zero, n);
-        for (unsigned int i = 0; i < n; i++)
-            if (zero[i])
-                throw SerialisationError("non-zero padding");
+        source(reinterpret_cast<char *>(&zero), n);
+        if (zero)
+            throw SerialisationError("non-zero padding");
     }
 }
 
