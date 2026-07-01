@@ -1187,7 +1187,7 @@ struct GitFileSystemObjectSinkImpl final : GitFileSystemObjectSink
     /// A directory to be written as a Git tree.
     struct Directory
     {
-        std::map<std::string, Child> children;
+        std::map<std::string, Child, std::less<>> children;
         std::optional<git_oid> oid;
 
         Child & lookup(const CanonPath & path)
@@ -1196,7 +1196,7 @@ struct GitFileSystemObjectSinkImpl final : GitFileSystemObjectSink
             auto parent = path.parent();
             auto cur = this;
             for (auto & name : *parent) {
-                auto i = cur->children.find(std::string(name));
+                auto i = cur->children.find(name);
                 if (i == cur->children.end())
                     throw Error("path '%s' does not exist", path);
                 auto dir = std::get_if<Directory>(&i->second.file);
@@ -1205,7 +1205,7 @@ struct GitFileSystemObjectSinkImpl final : GitFileSystemObjectSink
                 cur = dir;
             }
 
-            auto i = cur->children.find(std::string(*path.baseName()));
+            auto i = cur->children.find(*path.baseName());
             if (i == cur->children.end())
                 throw Error("path '%s' does not exist", path);
             return i->second;
@@ -1264,7 +1264,7 @@ struct GitFileSystemObjectSinkImpl final : GitFileSystemObjectSink
 
         Directory * cur = &state.root;
         for (auto & name : *parent) {
-            auto i = cur->children.find(std::string(name));
+            auto i = cur->children.find(name);
             if (i == cur->children.end())
                 return;
             auto dir = std::get_if<Directory>(&i->second.file);
@@ -1273,7 +1273,7 @@ struct GitFileSystemObjectSinkImpl final : GitFileSystemObjectSink
             cur = dir;
         }
 
-        auto i = cur->children.find(std::string(*path.baseName()));
+        auto i = cur->children.find(*path.baseName());
         if (i != cur->children.end() && i->second.id == id)
             i->second.file = oid;
     }
