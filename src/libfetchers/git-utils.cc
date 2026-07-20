@@ -26,6 +26,7 @@
 #include <git2-experimental/indexer.h>
 #include <git2-experimental/object.h>
 #include <git2-experimental/odb.h>
+#include <git2-experimental/odb_backend.h>
 #include <git2-experimental/refs.h>
 #include <git2-experimental/remote.h>
 #include <git2-experimental/repository.h>
@@ -34,6 +35,7 @@
 #include <git2-experimental/submodule.h>
 #include <git2-experimental/sys/odb_backend.h>
 #include <git2-experimental/sys/mempack.h>
+#include <git2-experimental/sys/repository.h>
 #include <git2-experimental/tag.h>
 #include <git2-experimental/tree.h>
 
@@ -327,10 +329,13 @@ struct GitRepoImpl : GitRepo, std::enable_shared_from_this<GitRepoImpl>
                enabling the specific backend.
                */
 
-            if (git_odb_new(Setter(odb)))
+            git_odb_backend_pack_options backpack_opts = GIT_ODB_BACKEND_PACK_OPTIONS_INIT;
+            // git_odb_backend_pack_options_init(backpack_opts, GIT_ODB_BACKEND_PACK_OPTIONS_VERSION);
+
+            if (git_odb_new(Setter(odb), NULL))
                 throw GitError("creating Git object database");
 
-            if (git_odb_backend_pack(&packBackend, (path / "objects").string().c_str()))
+            if (git_odb_backend_pack(&packBackend, (path / "objects").string().c_str(), &backpack_opts))
                 throw GitError("creating pack backend");
 
             if (git_odb_add_backend(odb.get(), packBackend, 1))
