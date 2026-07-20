@@ -44,7 +44,7 @@ struct GitArchiveInputScheme : InputScheme
         auto size = path.size();
         if (size == 3) {
             if (std::regex_match(path[2], revRegex))
-                rev = parseGitHash(path[2]);
+                attrs.insert_or_assign("rev", parseGitHash(path[2]));
             else
                 attrs.insert_or_assign("ref", path[2]);
         } else if (size > 3) {
@@ -63,7 +63,7 @@ struct GitArchiveInputScheme : InputScheme
             if (name == "rev") {
                 if (attrs.contains(name))
                     throw BadURL("URL '%s' contains multiple commit hashes", url);
-                rev = parseGitHash(value);
+                attrs.insert_or_assign("rev", parseGitHash(value));
             } else if (name == "ref") {
                 if (attrs.contains(name))
                     throw BadURL("URL '%s' contains multiple branch/tag names", url);
