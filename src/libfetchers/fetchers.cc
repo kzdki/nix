@@ -453,7 +453,15 @@ std::optional<Hash> Input::getRev() const
             //
             // Note that means that for SHA-256 git repos, prefixing
             // must be used.
-            hash = Hash::parseAny(*s, HashAlgorithm::SHA1);
+            HashAlgorithm algo;
+            if (s->size() == 40)
+                algo = HashAlgorithm::SHA1;
+            else if (s->size() == 64)
+                algo = HashAlgorithm::SHA256;
+            else
+                // Fallback to SHA1 for other lengths (e.g., base32) – but Git revs are always hex
+                algo = HashAlgorithm::SHA1;
+            return Hash::parseAny(*s, algo);
         }
     }
 
